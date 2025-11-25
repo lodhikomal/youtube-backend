@@ -25,8 +25,6 @@ dbConnect()
 
 
 
-
-
 // (async()=>{
 //     try {
 //    const conectionINstance= await mongoose.connect(`${process.env.MONGODB_URI}/${DB_Name}`)
