@@ -5,7 +5,22 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
+const generateAccessAndRefereshTokens = async(userId) =>{
+    try {
+        const user = await User.findById(userId)
+        const accessToken = user.generateAccessToken()
+        const refreshToken = user.generateRefreshToken()
 
+        user.refreshToken = refreshToken
+        await user.save({ validateBeforeSave: false })
+
+        return {accessToken, refreshToken}
+
+
+    } catch (error) {
+        throw new ApiError(500, "Something went wrong while generating referesh and access token")
+    }
+}
 const registerUser=asyncHandler(async(req,res)=>{
     // get user details from frontend
     // validation - not empty
@@ -71,4 +86,42 @@ const registerUser=asyncHandler(async(req,res)=>{
     )
     })
 
-export {registerUser}
+    //login controller
+    const loginUser=asyncHandler(async(req,res)=>{
+          // req body -> data
+    // username or email
+    //find the user
+    //password check
+    //access and referesh token
+    //send cookie
+        const {password,userName,email}=req.body
+
+        if(!userName|| !email){
+            throw new ApiError(400,"userName and email are required.")
+        }
+
+       const user=await User.findOne({
+            $or:[{email} ,{userName}]
+        })
+        if(!user){
+            throw new ApiError(404,"user not found.")
+        }
+        const isValidPassword=await user.isPasswordCorrect(password)
+        if(!isValidPassword){
+            throw new ApiError(401,"Invalid user crediential.")
+        }
+       const{accessToken,refreshToken}=await generateAccessAndRefereshTokens(user._id)
+
+       const loggedUser=await User.findById(user._id).select(
+        "-password refreshToken"
+       ).lean();
+       const option={
+            httpOnly:true,
+            secure:true
+       }
+       return res.status(200).cookie("accessToken",accessToken,option).cookie
+       ("refreshToken",refreshToken,option)
+ 
+    })
+
+export {registerUser,loginUser}
