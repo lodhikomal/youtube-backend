@@ -6,7 +6,18 @@ import { registerUser } from "../controlles/user.controller.js";
 
 const router = Router()
 
-router.route("/register").post(   
+router.route("/register").post( 
+    upload.fields([
+        {
+
+            name:"avtar",
+            maxCount:1
+        },
+        { name:"coverImage",
+            maxCount:1
+        }
+
+    ])  ,
     registerUser
     )
 
